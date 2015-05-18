@@ -311,7 +311,7 @@ $libstr
     );
     {$context['renderex']}
     {$context['ops']['op_start']}'$code'{$context['ops']['op_end']}
-}$phpend";
+};$phpend";
     }
 
     /**
