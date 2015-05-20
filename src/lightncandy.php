@@ -87,6 +87,7 @@ class LightnCandy {
     const POS_ENDTAG = 8;
     const POS_RSPACE = 9;
     const POS_ROTHER = 10;
+    const TOKEN_SEARCH = "/^(.*?)(\\s*)(%s)(~?)([\\^#\\/!&>]?)(.*?)(~?)(%s)(\\s*)(.*)\$/s";
 
     protected static $lastContext;
 
@@ -188,7 +189,7 @@ class LightnCandy {
             $right = preg_quote($right);
         }
 
-        $context['tokens']['search'] = "/^(.*?)(\\s*)($left)(~?)([\\^#\\/!&>]?)(.*?)(~?)($right)(\\s*)(.*)\$/s";
+        $context['tokens']['search'] = sprintf(self::TOKEN_SEARCH, $left, $right);
     }
 
     /**
