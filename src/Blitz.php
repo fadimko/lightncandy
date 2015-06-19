@@ -13,7 +13,9 @@ class Blitz {
     public function load ($body) {
         $preparedBody = $this->prepare ($body);
         $this->code = LightnCandy::compile ($preparedBody, ["flags" =>
-            LightnCandy::FLAG_BARE              // compile to function, that don't print rendered data to screen, but return it as a string
+            LightnCandy::FLAG_BLITZ |
+            LightnCandy::FLAG_BARE |        // compile to function, that don't print rendered data to screen, but return it as a string
+            LightnCandy::FLAG_MUSTACHESP    // remove spaces and linebreaks around context tags
         ]);
         $this->renderer = eval ($this->code);
     }
@@ -62,7 +64,9 @@ class Blitz {
             ['/[ ]*}}/',            '}}}'],
             ['/[ ]+-->/',           '}}}'],
             ['/<!--[^-]*-->/',      ''],  // Blitz treats "<!--" without space in the end as comments and doesn't show them
-        ];
+            ['/{{{(BEGIN|begin)[ ]*([^}]*)}}}/', '{{#$2}}'],    // kinda workaround: we replaced all '{{' with '{{{' because of
+            ['/{{{(END|end)[ ]*([^}]*)}}}/', '{{/$2}}'],        // html-escaping that we don't need, but blocks must be in '{{'
+        ];                                                      // so we remove superfluous braces
 
         Blitz::$blitzTokens = array_map (function ($x) {return $x[0];}, $blitzHandlebarsTokens);
         Blitz::$handlebarsTokens = array_map (function ($x) {return $x[1];}, $blitzHandlebarsTokens);

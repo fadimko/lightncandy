@@ -63,6 +63,10 @@ class LightnCandy {
     // Template rendering time debug flags
     const FLAG_RENDER_DEBUG = 524288;
 
+    /* BLITZ COMPATIBILITY */
+    const FLAG_BLITZ = 1073741824;
+    /* !BLITZ COMPATIBILITY */
+
     // alias flags
     const FLAG_BESTPERFORMANCE = 16384; // FLAG_ECHO
     const FLAG_JS = 24; // FLAG_JSTRUE + FLAG_JSOBJECT
@@ -357,6 +361,9 @@ $libstr
                 'prop' => $flags & self::FLAG_PROPERTY,
                 'method' => $flags & self::FLAG_METHOD,
                 'runpart' => $flags & self::FLAG_RUNTIMEPARTIAL,
+                /* BLITZ COMPATIBILITY */
+                'blitz' => $flags & self::FLAG_BLITZ,
+                /* !BLITZ COMPATIBILITY */
             ),
             'level' => 0,
             'scan' => true,
@@ -1855,8 +1862,12 @@ $libstr
                 $pop2 = array_pop($context['stack']);
                 $v = static::getVariableName($vars[0], $context);
                 if (!$each && ($pop2 !== $v[1])) {
-                    $context['error'][] = 'Unexpect token ' . static::tokenString($token) . " ! Previous token {{{$pop}$pop2}} is not closed";
-                    return;
+                    /* BLITZ COMPATIBILITY */
+                    if (!$context['flags']['blitz'] || ($v[1] !== 'this')) {
+                    /* !BLITZ COMPATIBILITY */
+                        $context['error'][] = 'Unexpect token ' . static::tokenString($token) . " ! Previous token {{{$pop}$pop2}} is not closed";
+                        return;
+                    }
                 }
                 if ($pop == '^') {
                     return "{$context['ops']['cnd_else']}''{$context['ops']['cnd_end']}";
