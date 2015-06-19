@@ -32,6 +32,14 @@ class Blitz {
         echo $renderer($this->vars);
     }
 
+    public function clean () {
+        $this->vars = [];
+    }
+
+    public function getIterations () {
+        return [$this->vars];
+    }
+
     /**
      * Temporary method, that converts Blitz templates to Handlebars.
      *
