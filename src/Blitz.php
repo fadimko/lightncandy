@@ -11,7 +11,8 @@ class Blitz {
      * @return void
      */
     public function load ($body) {
-        $this->code = LightnCandy::compile ($body, ["flags" =>
+        $preparedBody = $this->prepare ($body);
+        $this->code = LightnCandy::compile ($preparedBody, ["flags" =>
             LightnCandy::FLAG_BARE              // compile to function, that don't print rendered data to screen, but return it as a string
         ]);
         $this->renderer = eval ($this->code);
@@ -31,7 +32,39 @@ class Blitz {
         echo $renderer($this->vars);
     }
 
+    /**
+     * Temporary method, that converts Blitz templates to Handlebars.
+     *
+     * @param $template string Blitz template
+     * @return string Handlebars template
+     */
+    private function prepare ($template) {
+        // before 5.6 PHP didn't allow to store arrays in consts
+        if (Blitz::$tokensInitialized === false)
+            Blitz::initializeBlitzHandlebarsTokens ();
+
+        return preg_replace (Blitz::$blitzTokens, Blitz::$handlebarsTokens, $template);
+    }
+
+    private static function initializeBlitzHandlebarsTokens () {
+        // contains pairs: Blitz token and matching Handlebars token
+        $blitzHandlebarsTokens = [
+            ['/([^{]?){{[ ]*\$?/',  '$1{{{'],    // '{{{' and '}}}' means no html-escaping
+            ['/<!--[ ]+\$?/',       '{{{'],
+            ['/[ ]*}}/',            '}}}'],
+            ['/[ ]+-->/',           '}}}'],
+            ['/<!--[^-]*-->/',      ''],  // Blitz treats "<!--" without space in the end as comments and doesn't show them
+        ];
+
+        Blitz::$blitzTokens = array_map (function ($x) {return $x[0];}, $blitzHandlebarsTokens);
+        Blitz::$handlebarsTokens = array_map (function ($x) {return $x[1];}, $blitzHandlebarsTokens);
+        Blitz::$tokensInitialized = true;
+    }
+
     private $code;
     private $renderer;
     private $vars = [];
- }
+    private static $tokensInitialized = false;
+    private static $blitzTokens = null;
+    private static $handlebarsTokens = null;
+}
