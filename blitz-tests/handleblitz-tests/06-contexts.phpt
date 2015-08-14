@@ -29,8 +29,7 @@ echo "\n";
 $bl = new Blitz;
 $bl->load ('{{BEGIN b1}}hello Dude, Donny, Sobchak, Jesus{{END}}');
 $vars = array ();
-$vars ['b1'] = array ();
-$vars ['b2'] = array ('name' => 'Donny');
+$vars ['b1'] = array ('name' => 'Donny');
 $bl->display ($vars);
 echo "\n";
 
@@ -41,7 +40,7 @@ $vars ['b1'] = NULL;
 $vars ['b2'] = "";
 $vars ['b3'] = true;
 $vars ['b4'] = [];
-$vars ['b5'] = [1];
+$vars ['b5'] = [1, 0, 3];
 $vars ['b6'] = ['carpet'];
 $bl->display ($vars);
 echo "\n";
@@ -49,5 +48,5 @@ echo "\n";
 --EXPECT--
 hello__Dude__Donny__Sobchak_
 hello Dude, Donny, Sobchak, Jesus
-
-hello , , , , Maude Lebowski, The Big Lebowski
+hello Dude, Donny, Sobchak, Jesus
+hello , , , , Maude LebowskiMaude LebowskiMaude Lebowski, The Big Lebowski

@@ -11,8 +11,17 @@ echo "\n";
 $T->display (array ());
 echo "\n";
 $T->display (array ("azaz" => "azazaza"));
+echo "\n\n";
+
+echo $T->parse () . "\n";
+echo $T->parse (array ()) . "\n";
+echo $T->parse (array ("azaz" => "azazaza")) . "\n";
 ?>
 --EXPECT--
+azaz
+azaz
+azaz
+
 azaz
 azaz
 azaz

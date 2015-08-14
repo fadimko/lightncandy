@@ -69,6 +69,12 @@ echo "\n";
 $T->display ();
 echo "\n";
 echo "\n";
+
+$T = new Blitz ();
+$T->load ('azaz{{ $var_1 }}{{ $_var2 }}{{ $var-3 }}');
+$T->display (array ("var_1" => "z", "_var2" => "a", "var-3" => "z"));
+echo "\n";
+echo "\n";
 ?>
 --EXPECT--
 
@@ -98,3 +104,4 @@ azazzz
 azazzz
 azazzz
 
+azazzaz

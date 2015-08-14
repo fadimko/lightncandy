@@ -65,6 +65,7 @@ class LightnCandy {
 
     /* BLITZ COMPATIBILITY */
     const FLAG_BLITZ = 1073741824;
+    const FLAG_GLOBALS = 2147483648;
     /* !BLITZ COMPATIBILITY */
 
     // alias flags
@@ -91,7 +92,10 @@ class LightnCandy {
     const POS_ENDTAG = 8;
     const POS_RSPACE = 9;
     const POS_ROTHER = 10;
-    const TOKEN_SEARCH = "/^(.*?)(\\s*)(%s)(~?)([\\^#\\/!&>]?)(.*?)(~?)(%s)(\\s*)(.*)\$/s";
+    /* BLITZ COMPATIBILITY */
+    //const TOKEN_SEARCH = "/^(.*?)(\\s*)(%s)(~?)([\\^#\\/!&>]?)(.*?)(~?)(%s)(\\s*)(.*)\$/s";
+    const TOKEN_SEARCH = "/^(.*?)(\\s*)(%s)(~?)([\\^#\\/!&>\\(<]?)(.*?)(~?)(%s)(\\s*)(.*)\$/s";
+    /* !BLITZ COMPATIBILITY */
 
     protected static $lastContext;
 
@@ -281,6 +285,7 @@ class LightnCandy {
         $flagMethod = static::getBoolStr($context['flags']['method']);
         $flagMustlok = static::getBoolStr($context['flags']['mustlok']);
         $flagEcho = static::getBoolStr($context['flags']['echo']);
+        $flagBlitz = static::getBoolStr($context['flags']['blitz']);
 
         $libstr = static::exportLCRun($context);
         $constants = static::exportLCRunConstant($context);
@@ -292,7 +297,9 @@ class LightnCandy {
         $phpend = $context['flags']['bare'] ? '' : "\n?>";
 
         // Return generated PHP code string.
-        return "{$phpstart}return function (\$in, \$debugopt = $debug) {
+        /* BLITZ COMPATIBILITY */
+        //return "{$phpstart}return function (\$in, \$debugopt = $debug) {
+        return "{$phpstart}return function (\$in, \$debugopt = $debug, \$cbObj = NULL, \$globals = NULL) {
     \$cx = array(
         'flags' => array(
             'jstrue' => $flagJStrue,
@@ -303,6 +310,7 @@ class LightnCandy {
             'mustlok' => $flagMustlok,
             'echo' => $flagEcho,
             'debug' => \$debugopt,
+            'blitz' => $flagBlitz,
         ),
         'constants' => $constants,
         'helpers' => $helpers,
@@ -312,6 +320,7 @@ class LightnCandy {
         'scopes' => array(),
         'sp_vars' => array('root' => \$in),
         'lcrun' => '{$context['lcrun']}',
+        'globals' => \$globals,
 $libstr
     );
     {$context['renderex']}
@@ -363,6 +372,7 @@ $libstr
                 'runpart' => $flags & self::FLAG_RUNTIMEPARTIAL,
                 /* BLITZ COMPATIBILITY */
                 'blitz' => $flags & self::FLAG_BLITZ,
+                'globals' => $flags & self::FLAG_GLOBALS,
                 /* !BLITZ COMPATIBILITY */
             ),
             'level' => 0,
@@ -1102,7 +1112,15 @@ $libstr
         array_pop($var);
         $p = count($var) ? static::getArrayCode($var) : '';
 
-        return array("((isset($base$n) && is_array($base$p)) ? $base$n : " . ($context['flags']['debug'] ? (static::getFuncName($context, 'miss', '') . "\$cx, '$exp')") : 'null' ) . ')', $exp);
+        return array("((isset($base$n) && is_array($base$p)) ? $base$n : " .
+            /* BLITZ COMPATIBILITY */
+            ($context['flags']['globals'] ? "((isset(\$cx['globals']$n) && is_array(\$cx['globals']$p)) ? \$cx['globals']$n : " : '') .
+            /* !BLITZ COMPATIBILITY */
+            ($context['flags']['debug'] ? (static::getFuncName($context, 'miss', '') . "\$cx, '$exp')") : 'null' ) .
+            /* BLITZ COMPATIBILITY */
+            ($context['flags']['globals'] ? ')' : '') .
+            /* !BLITZ COMPATIBILITY */
+            ')', $exp);
     }
 
     /**
@@ -1254,14 +1272,39 @@ $libstr
             $token[self::POS_OP] = ' ';
             return array(false, array());
         }
-
         // Skip validation on comments
         if ($token[self::POS_OP] === '!') {
             return array(false, array());
         }
 
+        /* BLITZ COMPATIBILITY */
+        // Blitz callbacks
+        if ($token[self::POS_OP] === '<') {
+            // LightnCandy escapes ' with \
+            // {{<foo('...')}} -> {{<foo(\'...\')}}
+            $cb = $token[self::POS_INNERTAG];
+            if (substr($cb, -3, 1) === '\\') {      // foo(\'...\')
+                preg_match("/^(.*?)\\((.*)\\)$/", $token[self::POS_INNERTAG], $matches);
+                $cb = $matches[1] . '(' . substr($matches[2], 1, -2) . '\'' . ')';
+            }
+            return array (true, array ($cb));
+        }
+        /* !BLITZ COMPATIBILITY */
+
         $vars = array();
         $count = preg_match_all('/(\s*)([^\s]+)/', $token[self::POS_INNERTAG], $matchedall);
+
+        /* BLITZ COMPATIBILITY */
+        // Blitz callbacks
+        if ($token[self::POS_OP] === '(') {
+            $isFuncName = true;
+            foreach ($matchedall [2] as &$argument) {
+                if ($isFuncName) { $isFuncName = false; continue; }
+                $argument = static::fixVariable($argument, $context);
+            }
+            return array (true, $matchedall[2]);
+        }
+        /* !BLITZ COMPATIBILITY */
 
         // Parse arguments and deal with "..." or [...] or (...)
         if (($count > 0) && $context['flags']['advar']) {
@@ -1552,6 +1595,14 @@ $libstr
             return;
         }
 
+        /* BLITZ COMPATIBILITY */
+        // Blitz callbacks
+        // TODO: implement check
+        if (($context['flags']['blitz']) && ($token[self::POS_OP] === '(' | $token[self::POS_OP] === '<')) {
+            return;
+        }
+        /* !BLITZ COMPATIBILITY */
+
         if (($token[self::POS_OP] === '^') && ($context['flags']['else'])) {
             return $context['usedFeature']['else']++;
         }
@@ -1702,6 +1753,13 @@ $libstr
             $token[self::POS_RSPACE] = '';
         }
 
+
+        /* BLITZ COMPATIBILITY */
+        if ($ret = static::compileCallback($token, $context, $vars)) {
+            return $ret;
+        }
+        /* !BLITZ COMPATIBILITY */
+
         if ($ret = static::compileSection($token, $context, $vars, $named)) {
             return $ret;
         }
@@ -1719,6 +1777,42 @@ $libstr
 
         return static::compileVariable($context, $vars, $raw);
     }
+
+    /* BLITZ COMPATIBILITY */
+    /**
+     * Internal method used by compile(). Return compiled PHP code partial for a Blitz callback token.
+     *
+     * @param $token
+     * @param $context
+     * @param $vars
+     *
+     * @return string|null Return compiled code segment for the token when the token is Blitz callback
+     */
+    protected static function compileCallback(&$token, &$context, &$vars) {
+        if ($token[self::POS_OP] != '<' && $token[self::POS_OP] != '(')
+            return;
+
+        $op = '';
+        switch ($token[self::POS_OP]) {
+            case '(':
+                $op = (!function_exists ($vars[0])) ? '$cbObj->' : '';
+                $op .= array_shift ($vars);     // function name
+                $op .= '(';
+                $compiledArguments = [];
+                foreach ($vars as $argument)
+                    $compiledArguments[] = static::getVariableName($argument, $context)[0];
+                $op .= implode (', ', $compiledArguments);
+                $op .= ')';
+                break;
+            case '<':
+                $cbName = strstr ($token[self::POS_INNERTAG], '(', true);
+                $op = (!function_exists ($cbName)) ? '$cbObj->' : '';
+                $op .= $vars[0];
+                break;
+        }
+        return $context['ops']['seperator'] . $op . $context['ops']['seperator'];
+    }
+    /* !BLITZ COMPATIBILITY */
 
     /**
      * Internal method used by compile(). Return compiled PHP code partial for a handlebars section token.
@@ -1835,28 +1929,39 @@ $libstr
     protected static function compileBlockEnd(&$token, &$context, $vars) {
         $each = false;
         $pop = array_pop($context['stack']);
-        switch ($token[self::POS_INNERTAG]) {
-            case 'if':
-            case 'unless':
-                if ($pop == ':') {
-                    array_pop($context['stack']);
-                    return $context['usedFeature']['parent'] ? "{$context['ops']['f_end']}}){$context['ops']['seperator']}" : "{$context['ops']['cnd_end']}";
-                }
-                return $context['usedFeature']['parent'] ? "{$context['ops']['f_end']}}){$context['ops']['seperator']}" : "{$context['ops']['cnd_else']}''{$context['ops']['cnd_end']}";
-            case 'with':
-                if ($context['flags']['with']) {
-                    if ($pop !== 'with') {
-                        $context['error'][] = 'Unexpect token: {{/with}} !';
-                        return;
-                    }
-                    return "{$context['ops']['f_end']}}){$context['ops']['seperator']}";
-                }
-                break;
-            case 'each':
-                $each = true;
-        }
+
+        if ($token[self::POS_INNERTAG] == 'each')
+            $each = true;
 
         switch($pop) {
+            case 'if':
+            case 'unless':
+                if ($token[self::POS_INNERTAG] === $pop
+                /* BLITZ COMPATIBILITY */
+                    || $context['flags']['blitz'] && $token[self::POS_INNERTAG] === ''
+                /* !BLITZ COMPATIBILITY */) {
+                    return $context['usedFeature']['parent'] ? "{$context['ops']['f_end']}}){$context['ops']['seperator']}" : "{$context['ops']['cnd_else']}''{$context['ops']['cnd_end']}";
+                } else {
+                    $context['error'][] = 'Unexpect token: {{/'. $token[self::POS_INNERTAG]. '}} !';
+                    return;
+                }
+            case ':':
+                if ($token[self::POS_INNERTAG] === array_pop($context['stack'])
+                /* BLITZ COMPATIBILITY */
+                    || $context['flags']['blitz'] && $token[self::POS_INNERTAG] === ''
+                /* !BLITZ COMPATIBILITY */) {
+                    return $context['usedFeature']['parent'] ? "{$context['ops']['f_end']}}){$context['ops']['seperator']}" : "{$context['ops']['cnd_end']}";
+                } else {
+                    $context['error'][] = 'Unexpect token: {{/' . $token[self::POS_INNERTAG] . '}} !';
+                    return;
+                }
+            case 'with':
+                if ($token[self::POS_INNERTAG] !== 'with') {
+                    $context['error'][] = 'Unexpect token: {{/' . $token[self::POS_INNERTAG] . '}} !';
+                    return;
+                }
+                return "{$context['ops']['f_end']}}){$context['ops']['seperator']}";
+
             case '#':
             case '^':
                 $pop2 = array_pop($context['stack']);
@@ -1892,15 +1997,30 @@ $libstr
         $v = isset($vars[1]) ? static::getVariableNameOrSubExpression($vars[1], $context) : array(null, array());
         switch (isset($vars[0][0]) ? $vars[0][0] : null) {
             case 'if':
+                $if = true;
+                $name = 'ifv';
+                $tag = 'if ';
+                $unless = '';
                 $context['stack'][] = 'if';
-                return $context['usedFeature']['parent']
-                    ? $context['ops']['seperator'] . static::getFuncName($context, 'ifv', 'if ' . $v[1]) . "\$cx, {$v[0]}, \$in, function(\$cx, \$in) {{$context['ops']['f_start']}"
-                    : "{$context['ops']['cnd_start']}(" . static::getFuncName($context, 'ifvar', $v[1]) . "\$cx, {$v[0]})){$context['ops']['cnd_then']}";
             case 'unless':
-                $context['stack'][] = 'unless';
+                if (!isset ($if)) {
+                    $name = 'unl';
+                    $tag = 'unless ';
+                    $unless = '!';
+                    $context['stack'][] = 'unless';
+                }
+                /* BLITZ COMPATIBILITY */
+                // {{#if a >= b}}
+                if (isset($vars[2]) && isset($vars[3]) && preg_match('/^[<>=!]+$/', $vars[2][0])) {
+                    $v2 = static::getVariableNameOrSubExpression($vars[3], $context);
+                    $v[0] = '(' . $v[0] . $vars [2][0] . $v2[0] . ')';
+                    $v[1] .= $vars[2][0] . $v2[1];
+                }
+                /* !BLITZ COMPATIBILITY */
+
                 return $context['usedFeature']['parent']
-                    ? $context['ops']['seperator'] . static::getFuncName($context, 'unl', 'unless ' . $v[1]) . "\$cx, {$v[0]}, \$in, function(\$cx, \$in) {{$context['ops']['f_start']}"
-                    : "{$context['ops']['cnd_start']}(!" . static::getFuncName($context, 'ifvar', $v[1]) . "\$cx, {$v[0]})){$context['ops']['cnd_then']}";
+                    ? $context['ops']['seperator'] . static::getFuncName($context, $name, $tag . $v[1]) . "\$cx, {$v[0]}, \$in, function(\$cx, \$in) {{$context['ops']['f_start']}"
+                    : "{$context['ops']['cnd_start']}(" . $unless . static::getFuncName($context, 'ifvar', $v[1]) . "\$cx, {$v[0]})){$context['ops']['cnd_then']}";
             case 'each':
                 $each = 'true';
                 array_shift($vars);
@@ -2405,10 +2525,19 @@ class LCRun3 {
             }
             foreach ($v as $index => $raw) {
                 if ($cx['flags']['spvar']) {
-                    $cx['sp_vars']['first'] = ($i === 0);
-                    $cx['sp_vars']['last'] = ($i == $last);
-                    $cx['sp_vars']['key'] = $index;
-                    $cx['sp_vars']['index'] = $i;
+                    /* BLITZ COMPATIBILITY */
+                    if (isset ($cx['flags']['blitz']) && $cx['flags']['blitz']) {
+                        $cx['sp_vars']['first'] = ($i === 0) ? 1 : 0;
+                        $cx['sp_vars']['last'] = ($i == $last) ? 1 : 0;
+                        $cx['sp_vars']['key'] = $index;
+                        $cx['sp_vars']['index'] = $i + 1;
+                    } else {
+                    /* !BLITZ COMPATIBILITY */
+                        $cx['sp_vars']['first'] = ($i === 0);
+                        $cx['sp_vars']['last'] = ($i == $last);
+                        $cx['sp_vars']['key'] = $index;
+                        $cx['sp_vars']['index'] = $i;
+                    }
                     $i++;
                 }
                 $ret[] = $cb($cx, $raw);
