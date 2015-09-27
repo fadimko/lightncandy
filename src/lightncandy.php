@@ -93,6 +93,7 @@ class LightnCandy {
     const POS_RSPACE = 9;
     const POS_ROTHER = 10;
     /* BLITZ COMPATIBILITY */
+    // Added new operators {{(...}} and {{<...}}
     //const TOKEN_SEARCH = "/^(.*?)(\\s*)(%s)(~?)([\\^#\\/!&>]?)(.*?)(~?)(%s)(\\s*)(.*)\$/s";
     const TOKEN_SEARCH = "/^(.*?)(\\s*)(%s)(~?)([\\^#\\/!&>\\(<]?)(.*?)(~?)(%s)(\\s*)(.*)\$/s";
     /* !BLITZ COMPATIBILITY */
@@ -298,6 +299,7 @@ class LightnCandy {
 
         // Return generated PHP code string.
         /* BLITZ COMPATIBILITY */
+        // implementing Blitz::setGlobals()
         //return "{$phpstart}return function (\$in, \$debugopt = $debug) {
         return "{$phpstart}return function (\$in, \$debugopt = $debug, \$cbObj = NULL, \$globals = NULL) {
     \$cx = array(
@@ -1114,6 +1116,7 @@ $libstr
 
         return array("((isset($base$n) && is_array($base$p)) ? $base$n : " .
             /* BLITZ COMPATIBILITY */
+            // implementing Blitz::setGlobals()
             ($context['flags']['globals'] ? "((isset(\$cx['globals']$n) && is_array(\$cx['globals']$p)) ? \$cx['globals']$n : " : '') .
             /* !BLITZ COMPATIBILITY */
             ($context['flags']['debug'] ? (static::getFuncName($context, 'miss', '') . "\$cx, '$exp')") : 'null' ) .
@@ -1938,6 +1941,7 @@ $libstr
             case 'unless':
                 if ($token[self::POS_INNERTAG] === $pop
                 /* BLITZ COMPATIBILITY */
+                    // Allow to close sections wihtout specifying section name: {{/}}
                     || $context['flags']['blitz'] && $token[self::POS_INNERTAG] === ''
                 /* !BLITZ COMPATIBILITY */) {
                     return $context['usedFeature']['parent'] ? "{$context['ops']['f_end']}}){$context['ops']['seperator']}" : "{$context['ops']['cnd_else']}''{$context['ops']['cnd_end']}";
@@ -1948,6 +1952,7 @@ $libstr
             case ':':
                 if ($token[self::POS_INNERTAG] === array_pop($context['stack'])
                 /* BLITZ COMPATIBILITY */
+                    // Allow to close sections wihtout specifying section name: {{/}}
                     || $context['flags']['blitz'] && $token[self::POS_INNERTAG] === ''
                 /* !BLITZ COMPATIBILITY */) {
                     return $context['usedFeature']['parent'] ? "{$context['ops']['f_end']}}){$context['ops']['seperator']}" : "{$context['ops']['cnd_end']}";
@@ -1968,7 +1973,8 @@ $libstr
                 $v = static::getVariableName($vars[0], $context);
                 if (!$each && ($pop2 !== $v[1])) {
                     /* BLITZ COMPATIBILITY */
-                    if (!$context['flags']['blitz'] || ($v[1] !== 'this')) {
+                    // Allow to close sections wihtout specifying section name: {{/}}
+                    if (!$context['flags']['blitz'] || ($token[self::POS_INNERTAG] !== '')) {
                     /* !BLITZ COMPATIBILITY */
                         $context['error'][] = 'Unexpect token ' . static::tokenString($token) . " ! Previous token {{{$pop}$pop2}} is not closed";
                         return;
