@@ -74,6 +74,29 @@ class Blitz {
         return [$this->vars];
     }
 
+    public function fetch ($path, $vars) {
+        $path = trim ($path, '/');
+        $lastSection = strrchr ($path, '/');
+        $lastSection = empty ($lastSection) ? $path : substr ($lastSection, 1);
+        $lightncandyPath = '\[' . str_replace('/', '\]\[', $path) . '\]';
+
+        $blockStart = "\\/\\* BLITZBLOCK_{$lightncandyPath} \\*\\/";
+        $blockEnd  = "\\/\\* !BLITZBLOCK_{$lightncandyPath} \\*\\/";
+        $codeRegex = "/^(.*?return )'.*?{$blockStart}(.*){$blockEnd}/s";
+
+        if (!preg_match ($codeRegex, $this->code, $matches)) {
+            /*ERROR*/;
+            return;
+        }
+
+        $code = $matches [1] . $matches [2] . ';};';
+        $vars = [$lastSection => $vars];
+
+        $renderer = eval ($code);
+        //Возможно, понадобится array_merge
+        return $renderer ($vars);
+    }
+
     /**
      * Temporary method, that converts Blitz templates to Handlebars.
      *

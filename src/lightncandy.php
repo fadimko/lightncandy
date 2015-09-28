@@ -1983,7 +1983,12 @@ $libstr
                 if ($pop == '^') {
                     return "{$context['ops']['cnd_else']}''{$context['ops']['cnd_end']}";
                 }
-                return "{$context['ops']['f_end']}}){$context['ops']['seperator']}";
+                return "{$context['ops']['f_end']}})" .
+                    /* BLITZ COMPATIBILITY */
+                    // implementing Blitz::fetch()
+                    ($context['flags']['blitz'] ? "/* !BLITZBLOCK_" . static::getSectionPath($context) . "{$pop2} */": '') .
+                    /* !BLITZ COMPATIBILITY */
+                    "{$context['ops']['seperator']}";
             default:
                 $context['error'][] = 'Unexpect token: ' . static::tokenString($token) . ' !';
                 return;
@@ -2044,7 +2049,12 @@ $libstr
         $v = static::getVariableNameOrSubExpression($vars[0], $context);
         $context['stack'][] = $v[1];
         $context['stack'][] = '#';
-        return $context['ops']['seperator'] . static::getFuncName($context, 'sec', (($each == 'true') ? 'each ' : '') . $v[1]) . "\$cx, {$v[0]}, \$in, $each, function(\$cx, \$in) {{$context['ops']['f_start']}";
+        return $context['ops']['seperator'] .
+            /* BLITZ COMPATIBILITY */
+            // implementing Blitz::fetch()
+            ($context['flags']['blitz'] ? "/* BLITZBLOCK_" . static::getSectionPath ($context) . " */": '') .
+            /* !BLITZ COMPATIBILITY */
+            static::getFuncName($context, 'sec', (($each == 'true') ? 'each ' : '') . $v[1]) . "\$cx, {$v[0]}, \$in, $each, function(\$cx, \$in) {{$context['ops']['f_start']}";
     }
 
     /**
@@ -2139,6 +2149,22 @@ $libstr
         }
         return ($context['usedCount'][$category][$name] += $count);
     }
+
+    /* BLITZ COMPATIBILITY */
+    /**
+     * Internal method for Blitz::fetch(). Used by compileBlockBegin() and compileBlockEnd().
+     */
+    protected static function getSectionPath(&$context) {
+        $path = '';
+        $prev = null;
+        foreach ($context['stack'] as $stackEl) {
+            if ($stackEl === '#')
+                $path .= $prev;
+            $prev = $stackEl;
+        }
+        return $path;
+    }
+    /* BLITZ COMPATIBILITY */
 }
 
 /**
