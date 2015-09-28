@@ -4,6 +4,14 @@ include "lightncandy.php";
 class Blitz {
 
     /**
+     * Load a template file.
+     */
+    function __construct ($filename = NULL) {
+        if (isset ($filename))
+            $this->load (file_get_contents ($filename));
+    }
+
+    /**
      * Load a template.
      *
      * @param string $body Blitz template body
@@ -64,6 +72,13 @@ class Blitz {
      */
     public function setGlobals ($vars) {
         $this->globals = $vars;
+    }
+
+    /**
+     * Alias for setGlobals()
+     */
+    public function setGlobal ($vars) {
+        $this->setGlobals ($vars);
     }
 
     public function clean () {
