@@ -1942,10 +1942,11 @@ $libstr
                 if ($token[self::POS_INNERTAG] === $pop
                 /* BLITZ COMPATIBILITY */
                     // Allow to close sections wihtout specifying section name: {{/}}
-                    || $context['flags']['blitz'] && $token[self::POS_INNERTAG] === ''
+                    || $context['flags']['blitz']
                 /* !BLITZ COMPATIBILITY */) {
                     return $context['usedFeature']['parent'] ? "{$context['ops']['f_end']}}){$context['ops']['seperator']}" : "{$context['ops']['cnd_else']}''{$context['ops']['cnd_end']}";
                 } else {
+                    //$context['error'][] = 'ffuuuuuu';
                     $context['error'][] = 'Unexpect token: {{/'. $token[self::POS_INNERTAG]. '}} !';
                     return;
                 }
@@ -1953,7 +1954,7 @@ $libstr
                 if ($token[self::POS_INNERTAG] === array_pop($context['stack'])
                 /* BLITZ COMPATIBILITY */
                     // Allow to close sections wihtout specifying section name: {{/}}
-                    || $context['flags']['blitz'] && $token[self::POS_INNERTAG] === ''
+                    || $context['flags']['blitz']
                 /* !BLITZ COMPATIBILITY */) {
                     return $context['usedFeature']['parent'] ? "{$context['ops']['f_end']}}){$context['ops']['seperator']}" : "{$context['ops']['cnd_end']}";
                 } else {

@@ -81,6 +81,15 @@ let's roll
 let's stop rolling
   {{ END }}
 {{ END }}
+
+{{ IF g }}
+you can write one word after END in tag, that closes if.
+{{ END nobody_cares_what_you_wrote_here }}
+{{ IF h }}
+and nobody cares what you will write,
+{{ ELSE }}
+and nobody cares what you will write.
+{{ END still_nobody_cares }}
 BODY;
 
 $T = new Blitz();
@@ -90,10 +99,11 @@ $data = array(
     'a' => [1],
     'c' => [1],
     'd' => [1],
-    'e' => 100500,
+    'e' => 1338,
     'f' => 10,
-    'e1' => 100500,
-    'block' => [1,2,3,4]
+    'e1' => 1338,
+    'block' => [1,2,3,4],
+    'g' => 57331
 );
 
 $T->display($data);
@@ -111,7 +121,7 @@ yep d
 yep d
 yep d
 
-nope e == 100500
+nope e == 1338
 yep f == 10
 
 yep e == e1
@@ -123,3 +133,6 @@ let's roll
 3!!!
 4
 let's stop rolling
+
+you can write one word after END in tag, that closes if.
+and nobody cares what you will write.
