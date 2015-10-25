@@ -95,7 +95,7 @@ class Blitz {
 
         $renderer = eval ($code);
         //Возможно, понадобится array_merge
-        return $renderer ($vars);
+        return $renderer ($vars, null, $this, $this->globals);
     }
 
     /**
