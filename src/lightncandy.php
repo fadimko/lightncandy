@@ -2531,8 +2531,16 @@ class LCRun3 {
         // #var, detect input type is object or not
         if (!$loop && $isAry) {
             $keys = array_keys($v);
-            $loop = (count(array_diff_key($v, array_keys($keys))) == 0);
-            $isObj = !$loop;
+            /* BLITZ COMPATIBILITY */
+            // "isset ($cx['flags']['blitz'])" is for unit tests
+            if (isset ($cx['flags']['blitz']) && $cx['flags']['blitz']) {
+                $loop = is_numeric (reset ($keys));
+                $isObj = (count(array_diff_key($v, array_keys($keys))) > 0);
+            } else {
+            /* !BLITZ COMPATIBILITY */
+                $loop = (count(array_diff_key($v, array_keys($keys))) == 0);
+                $isObj = !$loop;
+            }
         }
 
         if (($loop && $isAry) || $isTrav) {
