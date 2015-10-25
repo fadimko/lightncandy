@@ -106,6 +106,8 @@ $vars =
     ]]
 ];
 echo $T->fetch ('film/actor', $vars['film'][0]['actor'][1]) . "\n";
+
+echo $T->fetch ('film/actor', [1]) . "\n";
 ?>
 --EXPECT--
 Hello, world!
@@ -137,3 +139,5 @@ Cast:
 - Tiny Ron as
             Al, 
             Tall Lab Tech;
+
+-  as

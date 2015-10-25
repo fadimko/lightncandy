@@ -30,10 +30,11 @@ class Blitz {
             LightnCandy::FLAG_ELSE |        // enables else tag
             LightnCandy::FLAG_NOESCAPE |    // no html-escaping
             LightnCandy::FLAG_GLOBALS |
-            LightnCandy::FLAG_ERROR_LOG
+            LightnCandy::FLAG_ERROR_EXCEPTION
         ]);
         $this->renderer = eval ($this->code);
     }
+//            LightnCandy::FLAG_ERROR_LOG
 
     /**
      * Render loaded template with data from $vars and print it.
@@ -109,7 +110,7 @@ class Blitz {
 
         $renderer = eval ($code);
         //Возможно, понадобится array_merge
-        return $renderer ($vars);
+        return $renderer ($vars, null, $this, $this->globals);
     }
 
     /**

@@ -44,9 +44,37 @@ $vars ['b5'] = [1, 0, 3];
 $vars ['b6'] = ['carpet'];
 $bl->display ($vars);
 echo "\n";
+
+/* Blitz accepts array of values if it is an array and it's first element has numeric key */
+$bl = new Blitz;
+$bl->load ('{{ BEGIN resizers }}
+server {{ hostname }}:{{ port }};
+{{ END }}');
+$bl->display (['resizers' => [
+    'abc' => ['hostname' => '127.0.0.1', 'port' => 1337],
+    ]]);
+echo "\n";
+
+$bl->display (['resizers' => [
+    1234 => ['hostname' => '127.0.0.1', 'port' => 1337],
+    'abc' => ['hostname' => '127.0.0.2', 'port' => 1338],
+    ]]);
+echo "\n";
+
+$bl->display (['resizers' => [
+    'abc' => ['hostname' => '127.0.0.2', 'port' => 1338],
+    1234 => ['hostname' => '127.0.0.1', 'port' => 1337],
+    ]]);
+echo "\n";
 ?>
 --EXPECT--
 hello__Dude__Donny__Sobchak_
 hello Dude, Donny, Sobchak, Jesus
 hello Dude, Donny, Sobchak, Jesus
 hello , , , , Maude LebowskiMaude LebowskiMaude Lebowski, The Big Lebowski
+server :;
+
+server 127.0.0.1:1337;
+server 127.0.0.2:1338;
+
+server :;
