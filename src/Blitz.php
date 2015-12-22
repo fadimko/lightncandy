@@ -20,7 +20,6 @@ class Blitz {
      */
     public function load ($body) {
         $preparedBody = $this->prepare ($body);
-//        echo $preparedBody . "\n\n";
         $this->code = LightnCandy::compile ($preparedBody, ["flags" =>
             LightnCandy::FLAG_BLITZ |
             LightnCandy::FLAG_BARE |        // compile to function, that don't print rendered data to screen, but return it as a string
@@ -32,9 +31,9 @@ class Blitz {
             LightnCandy::FLAG_GLOBALS |
             LightnCandy::FLAG_ERROR_EXCEPTION
         ]);
+//            LightnCandy::FLAG_ERROR_LOG
         $this->renderer = eval ($this->code);
     }
-//            LightnCandy::FLAG_ERROR_LOG
 
     /**
      * Render loaded template with data from $vars and print it.
@@ -126,12 +125,6 @@ class Blitz {
 
         $template = preg_replace (Blitz::$blitzTokens, Blitz::$handlebarsTokens, $template);
         $template = preg_replace_callback (
-
-            //['/{{ *([^ (}]+) *(\\((\\\'|\\").*?[^\\]\\)) *}}/', '{{<$1$2}}'],   // {{foo ("<smth>" ) }} -> {{<foo("<smth>" ) }}
-
-            //'/{{ *([^ (}]+) *((\\((?=\\").*?[^\\\\]\\"\\))|(\\((?=\\\').*?[^\\\\]\\\'\\))) *}}/'
-
-            //'/{{(?=[^<]) *([^}]*?) *\\(([^)}]*)\\) *}}/',
             '/{{[^\'"}]*?\\(.*?}}/',
             function ($matches) {
                 $quoteCallback = preg_replace (
@@ -152,22 +145,18 @@ class Blitz {
     private static function initializeBlitzHandlebarsTokens () {
         // contains pairs: Blitz token and matching Handlebars token
         $blitzHandlebarsTokens = [
-            ['/({{|<!-- ) *\$?/', '{{'],
-            ['/ *(}}| -->)/',     '}}'],
+            ['/({{|<!-- ) *\$?/',   '{{'],
+            ['/ *(}}| -->)/',       '}}'],
             ['/<!--[^-]*-->/',      ''],    // Blitz treats "<!--" without space in the end as comments and doesn't show them
-            ['/{{(BEGIN|begin) *([^}]*)}}/',  '{{#$2}}'],
-            ['/{{(END|end) *([^}]*)}}/',      '{{/$2}}'],
+            ['/{{(BEGIN|begin) *([^}]*)}}/',            '{{#$2}}'],
+            ['/{{(END|end) *([^}]*)}}/',                '{{/$2}}'],
             ['/{{([^}]* |)\$?_(first|last)([^}]*)}}/',  '{{$1@$2$3}}'],
             ['/{{([^}]* |)\$?_num([^}]*)}}/',           '{{$1@index$2}}'],
             ['/{{([^}]* |)\$?_parent([^}]*)}}/',        '{{$1../$2}}'],
-            ['/{{(IF|if) \$?([^}]*)}}/',            '{{#if $2}}'],
-            ['/{{#if ([^}]*?)([<>=!]+)/',             '{{#if $1 $2 '],  // spaces around logic operators
-            ['/{{(UNLESS|unless) \$?([^}]*)}}/',    '{{#unless $2}}'],
-            ['/{{(ELSE|else)}}/',                   '{{else}}'],
-            //['{{[ ]*[a-zA-Z0-9_]*\\((([ ,]*)([a-zA-Z0-9_\\-]*|[\\\'][^\\\']*[\\\']|[\\"][^\\"]*[\\"]))\\)[s]*}}']
-            //['/({{#if[^}]*)==([^}]*}})/',     '$1 == $2']     // LightnCandy don't understand '==' without spaces
-            //['/<!--[ ]+\$?/',   '{{'],
-            //['/[ ]+-->/',       '}}'],
+            ['/{{(IF|if) \$?([^}]*)}}/',                '{{#if $2}}'],
+            ['/{{#if ([^}]*?)([<>=!]+)/',               '{{#if $1 $2 '],  // spaces around logic operators
+            ['/{{(UNLESS|unless) \$?([^}]*)}}/',        '{{#unless $2}}'],
+            ['/{{(ELSE|else)}}/',                       '{{else}}'],
         ];
 
         Blitz::$blitzTokens = array_map (function ($x) {return $x[0];}, $blitzHandlebarsTokens);
