@@ -20,6 +20,7 @@ class Blitz {
      */
     public function load ($body) {
         $preparedBody = $this->prepare ($body);
+echo $preparedBody . "\n";
         $this->code = LightnCandy::compile ($preparedBody, ["flags" =>
             LightnCandy::FLAG_BLITZ |
             LightnCandy::FLAG_BARE |        // compile to function, that don't print rendered data to screen, but return it as a string
@@ -148,11 +149,11 @@ class Blitz {
             ['/({{|<!-- ) *\$?/',   '{{'],
             ['/ *(}}| -->)/',       '}}'],
             ['/<!--[^-]*-->/',      ''],    // Blitz treats "<!--" without space in the end as comments and doesn't show them
-            ['/{{(BEGIN|begin) *([^}]*)}}/',            '{{#$2}}'],
-            ['/{{(END|end) *([^}]*)}}/',                '{{/$2}}'],
-            ['/{{([^}]* |)\$?_(first|last)([^}]*)}}/',  '{{$1@$2$3}}'],
-            ['/{{([^}]* |)\$?_num([^}]*)}}/',           '{{$1@index$2}}'],
-            ['/{{([^}]* |)\$?_parent([^}]*)}}/',        '{{$1../$2}}'],
+            ['/{{(BEGIN|begin)(| +([^}]*))}}/',             '{{#$3}}'],
+            ['/{{(END|end)(| +([^}]*))}}/',                 '{{/$3}}'],
+            ['/{{([^}]* |)\$?_(first|last)(| [^}]*)}}/',    '{{$1@$2$3}}'],
+            ['/{{([^}]* |)\$?_num(| [^}]*)}}/',             '{{$1@index$2}}'],
+            ['/{{([^}]* |)\$?_parent(| [^}]*)}}/',          '{{$1../$2}}'],
             ['/{{(IF|if) \$?([^}]*)}}/',                '{{#if $2}}'],
             ['/{{#if ([^}]*?)([<>=!]+)/',               '{{#if $1 $2 '],  // spaces around logic operators
             ['/{{(UNLESS|unless) \$?([^}]*)}}/',        '{{#unless $2}}'],
