@@ -20,7 +20,7 @@ class Blitz {
      */
     public function load ($body) {
         $preparedBody = $this->prepare ($body);
-echo $preparedBody . "\n";
+
         $this->code = LightnCandy::compile ($preparedBody, ["flags" =>
             LightnCandy::FLAG_BLITZ |
             LightnCandy::FLAG_BARE |        // compile to function, that don't print rendered data to screen, but return it as a string
