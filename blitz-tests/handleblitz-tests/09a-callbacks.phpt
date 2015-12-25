@@ -47,6 +47,7 @@ $template = <<<TEMPLATE
 {{ subclassFunction() }}
 {{ substr(\$data, 3) }}
 
+
 TEMPLATE;
 
 $b = new BlitzSubclass;
@@ -57,6 +58,52 @@ $vars = [
     'data' => 'sausage',
     ];
 $b->display ($vars);
+
+// Check, that cbObj is passed correctly to block's anonymous function.
+
+/*
+*/
+
+$template = <<<TEMPLATE
+{{BEGIN block}}
+    {{ getNumber() }}
+    {{ getString(23) }}
+    {{ getSum(\$num1, 10) }}
+    {{ getSum(num1, 10) }}
+    {{ getSum(10, num2) }}
+    {{ beautifyString("ugly string") }}
+    {{ subclassFunction() }}
+    {{ substr(\$data, 3) }}
+{{END}}
+
+{{IF block}}
+    {{ getNumber() }}
+    {{ getString(23) }}
+    {{ getSum(\$num1, 10) }}
+    {{ getSum(num1, 10) }}
+    {{ getSum(10, num2) }}
+    {{ beautifyString("ugly string") }}
+    {{ subclassFunction() }}
+    {{ substr(\$data, 3) }}
+{{END}}
+
+
+TEMPLATE;
+
+$b = new BlitzSubclass;
+$b->load ($template);
+$vars = [
+    'block' => [
+        'num1' => 11,
+        'num2' => 12,
+        'data' => 'sausage',
+        ],
+    'num1' => 11,
+    'num2' => 12,
+    'data' => 'sausage'
+    ];
+$b->display ($vars);
+
 ?>
 --EXPECT--
 17
@@ -67,3 +114,21 @@ good string :>
 \o/ ugly string \o/
 Yay, Ima subclass function!
 sage
+
+    17
+    good string :>
+    21
+    21
+    22
+    \o/ ugly string \o/
+    Yay, Ima subclass function!
+    sage
+
+    17
+    good string :>
+    21
+    21
+    22
+    \o/ ugly string \o/
+    Yay, Ima subclass function!
+    sage

@@ -322,6 +322,7 @@ class LightnCandy {
         'scopes' => array(),
         'sp_vars' => array('root' => \$in),
         'lcrun' => '{$context['lcrun']}',
+        'cbObj' => \$cbObj,
         'globals' => \$globals,
 $libstr
     );
@@ -1798,7 +1799,7 @@ $libstr
         $op = '';
         switch ($token[self::POS_OP]) {
             case '(':
-                $op = (!function_exists ($vars[0])) ? '$cbObj->' : '';
+                $op = (!function_exists ($vars[0])) ? '$cx[\'cbObj\']->' : '';
                 $op .= array_shift ($vars);     // function name
                 $op .= '(';
                 $compiledArguments = [];
@@ -1809,7 +1810,7 @@ $libstr
                 break;
             case '<':
                 $cbName = strstr ($token[self::POS_INNERTAG], '(', true);
-                $op = (!function_exists ($cbName)) ? '$cbObj->' : '';
+                $op = (!function_exists ($cbName)) ? '$cx[\'cbObj\']->' : '';
                 $op .= $vars[0];
                 break;
         }
