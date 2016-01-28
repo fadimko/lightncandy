@@ -1702,7 +1702,11 @@ $libstr
         }
 
         // Do not need standalone detection for these tags
-        if (!$token[self::POS_OP] || ($token[self::POS_OP] === '&')) {
+        /* BLITZ COMPATIBILITY */
+//        if (!$token[self::POS_OP] || ($token[self::POS_OP] === '&')) {
+        if (!$token[self::POS_OP] || ($token[self::POS_OP] === '&') ||
+                ($token[self::POS_OP] === '(') || ($token[self::POS_OP] === '<')) {
+        /* !BLITZ COMPATIBILITY */
             if (!$context['flags']['else'] || (isset($vars[0][0]) && ($vars[0][0] !== 'else'))) {
                 $st = false;
             }
