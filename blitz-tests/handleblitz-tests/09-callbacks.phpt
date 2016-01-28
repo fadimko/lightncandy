@@ -6,7 +6,7 @@ include ('common.inc');
 
 $template = <<<TEMPLATE
  {{foo()}} {{  asdf      (  efef, ee, 0                )}} {{ffuu ()}}  {{ ffuuuuu( f1, f2   ,ff3 , f4) }}
- {{foo("")}} {{  asdf      ('  efef, ee, 0               ')}} {{ffuu ("")}}  {{ ffuuuuu(" f1, f2   ,ff3 , f4") }}
+ {{foo( "" )}} {{  asdf      ( '  efef, ee, 0               ')}} {{ffuu ("")}}  {{ ffuuuuu(" f1, f2   ,ff3 , f4") }}
 TEMPLATE;
 
 class BlitzTest extends Blitz {

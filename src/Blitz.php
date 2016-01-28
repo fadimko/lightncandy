@@ -114,7 +114,7 @@ class Blitz {
     }
 
     /**
-     * Temporary method, that converts Blitz templates to Handlebars.
+     * Method, that converts Blitz templates to LightnCanduy.
      *
      * @param $template string Blitz template
      * @return string Handlebars template
@@ -124,19 +124,33 @@ class Blitz {
         if (Blitz::$tokensInitialized === false)
             Blitz::initializeBlitzHandlebarsTokens ();
 
-        $template = preg_replace (Blitz::$blitzTokens, Blitz::$handlebarsTokens, $template);
+        // Replace all <!-- --> tags with {{}}, and trim spaces inside tags
+        $template = preg_replace (Blitz::$blitzTags, Blitz::$handlebarsTags, $template);
+
+        // Throw the $s away. Throws away them even from strings.
         $template = preg_replace_callback (
-            '/{{[^\'"}]*?\\(.*?}}/',
+            '/{{.*?}}/',
+            function ($matches) {return str_replace('$', '', $matches [0]);},
+            $template);
+
+        // BEGIN, END, IF, block vars
+        $template = preg_replace (Blitz::$blitzTokens, Blitz::$handlebarsTokens, $template);
+
+        // Callbacks
+        $template = preg_replace_callback (
+            '/{{[^}]*?\\(.*?}}/',
             function ($matches) {
                 $quoteCallback = preg_replace (
-                    '/{{ *([^ (}]+) *((\\((?=\\").*?[^\\\\]\\"\\))|(\\((?=\\\').*?[^\\\\]\\\'\\))) *}}/',
-                    '{{<$1$2}}',
-                    $matches [0]);  // {{ foo ("<smth>") }} -> {{<foo("<smth>")}}
+                    ['`{{([^ (]*?) *(\\( *(".*") *\\))}}`',
+                     '`{{([^ (]*?) *(\\( *(\'.*\') *\\))}}`'],
+                    ['{{<$1($3)}}',
+                     '{{<$1($3)}}'],
+                    $matches [0]);  // {{ foo ( "<smth>") }} -> {{<foo( "<smth>")}}
                 if ($quoteCallback != $matches[0])
                     return $quoteCallback;
 
-                preg_match ('/{{ *([^}]*?) *\\(([^)}]*)\\) *}}/', $matches [0], $callback);
-                return "{{({$callback[1]} " . str_replace ([',', '$'], ' ', $callback[2]) . '}}'; // {{ foo ( a ,b) }} -> {{(foo  a  b}}
+                preg_match ('/{{([^}]*?) *\\(([^)]*)\\)}}/', $matches [0], $callback);
+                return "{{({$callback[1]} " . str_replace (',', ' ', $callback[2]) . '}}'; // {{ foo ( a ,b) }} -> {{(foo  a  b}}
             },
             $template);
 
@@ -144,22 +158,32 @@ class Blitz {
     }
 
     private static function initializeBlitzHandlebarsTokens () {
+        $id = '[a-zA-Z0-9_\.]+';    //ids + paths + numbers
+        $expr = '[=><!]+';
+
         // contains pairs: Blitz token and matching Handlebars token
-        $blitzHandlebarsTokens = [
-            ['/({{|<!-- ) *\$?/',   '{{'],
-            ['/ *(}}| -->)/',       '}}'],
-            ['/<!--[^-]*-->/',      ''],    // Blitz treats "<!--" without space in the end as comments and doesn't show them
-            ['/{{(BEGIN|begin)(| +([^}]*))}}/',             '{{#$3}}'],
-            ['/{{(END|end)(| +([^}]*))}}/',                 '{{/$3}}'],
-            ['/{{([^}]* |)\$?_(first|last)(| [^}]*)}}/',    '{{$1@$2$3}}'],
-            ['/{{([^}]* |)\$?_num(| [^}]*)}}/',             '{{$1@index$2}}'],
-            ['/{{([^}]* |)\$?_parent(| [^}]*)}}/',          '{{$1../$2}}'],
-            ['/{{(IF|if) \$?([^}]*)}}/',                '{{#if $2}}'],
-            ['/{{#if ([^}]*?)([<>=!]+)/',               '{{#if $1 $2 '],  // spaces around logic operators
-            ['/{{(UNLESS|unless) \$?([^}]*)}}/',        '{{#unless $2}}'],
-            ['/{{(ELSE|else)}}/',                       '{{else}}'],
+        $blitzHandlebarsTags = [
+            ['`<!-- (.*?) -->`',        '{{$1}}'],
+            ['`{{[ ]*(.*?)[ ]*}}`',     '{{$1}}'],
+            ['`<!--[^-]*-->`',          '']    // Blitz treats "<!--" without space in the end as comments and doesn't show them
         ];
 
+        $blitzHandlebarsTokens = [
+            ['`{{(BEGIN|begin) +(.*?)}}`',      '{{#$2}}'],
+            ['`{{(END|end)(| +(.*?))}}`',       '{{/$3}}'],
+
+            ["`{{(IF|if) +($id)(| *($expr) *($id))}}`",             '{{#if $2 $4 $5}}'],
+            ["`{{(UNLESS|unless) +($id)(| *($expr) *($id))}}`",     '{{#unless $2 $4 $5}}'],
+            ["`{{ELSE}}`",       '{{else}}'],
+
+            ['`{{(|[^}]* )_first(| [^}]*)}}`',      '{{$1@first$2}}'], // This regexps won't find block variables in function calls.
+            ['`{{(|[^}]* )_last(| [^}]*)}}`',       '{{$1@last$2}}'],
+            ['`{{(|[^}]* )_num(| [^}]*)}}`',        '{{$1@index$2}}'],
+            ['`{{(|[^}]* )_parent\.(.*?)}}`',       '{{$1../$2}}']  // This will remove only the first occurrence of '_parent', which is fine for everything except callbacks
+        ];
+
+        Blitz::$blitzTags = array_map (function ($x) {return $x[0];}, $blitzHandlebarsTags);
+        Blitz::$handlebarsTags = array_map (function ($x) {return $x[1];}, $blitzHandlebarsTags);
         Blitz::$blitzTokens = array_map (function ($x) {return $x[0];}, $blitzHandlebarsTokens);
         Blitz::$handlebarsTokens = array_map (function ($x) {return $x[1];}, $blitzHandlebarsTokens);
         Blitz::$tokensInitialized = true;
@@ -170,6 +194,8 @@ class Blitz {
     protected $vars = [];
     protected $globals = [];
     private static $tokensInitialized = false;
+    private static $blitzTags = null;
+    private static $handlebarsTags = null;
     private static $blitzTokens = null;
     private static $handlebarsTokens = null;
 }

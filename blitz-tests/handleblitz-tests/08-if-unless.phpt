@@ -1,5 +1,5 @@
 --TEST--
-IF, UNLESS. Simple existance checks, arithmetical comparison.
+IF, UNLESS. Simple existence checks, arithmetical comparison.
 --FILE--
 <?php
 include ('common.inc');
@@ -10,27 +10,27 @@ yep a
 {{ ELSE }}
 nope a
 {{ END }}
-{{ UNLESS a }}
+{{UNLESS a }}
 nope a
 {{ ELSE }}
 yep a
 {{ END }}
 
-{{ if b }}
+{{ if  b }}
 yep b
 {{ else }}
 nope b
 {{ end }}
-{{ unless b }}
+{{unless  b }}
 nope b
 {{ else }}
 yep b
 {{ end }}
 
-{{IF \$c}}
+{{ IF  \$c}}
 yep c
 {{END}}
-{{UNLESS \$c}}
+{{UNLESS  \$c}}
 nope c
 {{END}}
 
@@ -76,7 +76,7 @@ nope e != f
   {{ IF _first }}
 let's roll
   {{ END }}
-{{\$_num}}{{ IF _num == 2 }}!!{{END}}{{ IF \$_num==3 }}!!!{{END}}
+{{\$_num}}{{ IF _num == 2 }}!!{{END}}{{ IF \$_num==3 }}!!!{{END}}{{ UNLESS _last }},{{ END }}
   {{ IF \$_last }}
 let's stop rolling
   {{ END }}
@@ -128,9 +128,9 @@ yep e == e1
 nope e != f
 
 let's roll
-1
-2!!
-3!!!
+1,
+2!!,
+3!!!,
 4
 let's stop rolling
 

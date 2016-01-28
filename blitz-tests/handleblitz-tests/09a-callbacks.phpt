@@ -43,7 +43,10 @@ $template = <<<TEMPLATE
 {{ getSum(\$num1, 10) }}
 {{ getSum(num1, 10) }}
 {{ getSum(10, num2) }}
+{{ getSum(\$num1, \$num2) }}
 {{ beautifyString("ugly string") }}
+{{ beautifyString( "ugly string"  ) }}
+{{ beautifyString( 'ugly string'  ) }}
 {{ subclassFunction() }}
 {{ substr(\$data, 3) }}
 
@@ -71,7 +74,10 @@ $template = <<<TEMPLATE
     {{ getSum(\$num1, 10) }}
     {{ getSum(num1, 10) }}
     {{ getSum(10, num2) }}
+    {{ getSum( \$num1, \$num2) }}
     {{ beautifyString("ugly string") }}
+    {{ beautifyString( "ugly string"  ) }}
+    {{ beautifyString( 'ugly string'  ) }}
     {{ subclassFunction() }}
     {{ substr(\$data, 3) }}
 {{END}}
@@ -82,7 +88,10 @@ $template = <<<TEMPLATE
     {{ getSum(\$num1, 10) }}
     {{ getSum(num1, 10) }}
     {{ getSum(10, num2) }}
+    {{ getSum( \$num1, \$num2  ) }}
     {{ beautifyString("ugly string") }}
+    {{ beautifyString( "ugly string"  ) }}
+    {{ beautifyString( 'ugly string'  ) }}
     {{ subclassFunction() }}
     {{ substr(\$data, 3) }}
 {{END}}
@@ -93,11 +102,11 @@ TEMPLATE;
 $b = new BlitzSubclass;
 $b->load ($template);
 $vars = [
-    'block' => [
-        'num1' => 11,
+    'block' =>[
+        ['num1' => 11,
         'num2' => 12,
-        'data' => 'sausage',
-        ],
+        'data' => 'sausage']
+    ],
     'num1' => 11,
     'num2' => 12,
     'data' => 'sausage'
@@ -111,6 +120,9 @@ good string :>
 21
 21
 22
+23
+\o/ ugly string \o/
+\o/ ugly string \o/
 \o/ ugly string \o/
 Yay, Ima subclass function!
 sage
@@ -120,6 +132,9 @@ sage
     21
     21
     22
+    23
+    \o/ ugly string \o/
+    \o/ ugly string \o/
     \o/ ugly string \o/
     Yay, Ima subclass function!
     sage
@@ -129,6 +144,9 @@ sage
     21
     21
     22
+    23
+    \o/ ugly string \o/
+    \o/ ugly string \o/
     \o/ ugly string \o/
     Yay, Ima subclass function!
     sage

@@ -48,6 +48,7 @@ return function ($in, $debugopt = 1, $cbObj = NULL, $globals = NULL) {
         'scopes' => array(),
         'sp_vars' => array('root' => $in),
         'lcrun' => 'LCRun3',
+        'cbObj' => $cbObj,
         'globals' => $globals,
 
     );
