@@ -1,5 +1,5 @@
 --TEST--
-Work with variables.
+Work with contexts.
 --FILE--
 <?php
 include ('common.inc');
