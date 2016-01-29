@@ -2519,6 +2519,13 @@ class LCRun3 {
      * @expect '038' when input array('flags' => array('spvar' => 1), 'sp_vars'=>array('root' => 0)), array(1,3,'a'=>4), 0, true, function ($c, $i) {return $i * $c['sp_vars']['index'];}
      */
     public static function sec($cx, $v, $in, $each, $cb, $else = null) {
+    /* BLITZ COMPATIBILITY */
+    /*
+     * @expect '' when input array('flags' => array('spvar' => 0)), true, true, false, function () {return 'A';}
+     * @expect '' when input array('flags' => array('spvar' => 0)), 0, 0, false, function () {return 'A';}
+     * @expect '' when input array('flags' => array('spvar' => 0)), [], 0, false, function () {return 'A';}
+     */
+    /* !BLITZ COMPATIBILITY */
         $isAry = is_array($v);
         $isTrav = $v instanceof Traversable;
         $loop = $each;
@@ -2537,6 +2544,7 @@ class LCRun3 {
         if (!$loop && $isAry) {
             $keys = array_keys($v);
             /* BLITZ COMPATIBILITY */
+            // First element of array with data should have numeric index.
             // "isset ($cx['flags']['blitz'])" is for unit tests
             if (isset ($cx['flags']['blitz']) && $cx['flags']['blitz']) {
                 $loop = is_numeric (reset ($keys));
@@ -2610,20 +2618,23 @@ class LCRun3 {
             }
             return '';
         }
-        if ($isAry) {
+        /* BLITZ COMPATIBILITY */
+        // Blocks in Blitz should only be rendered, when $v is a non-empty array
+        if ($isAry && !(isset ($cx['flags']['blitz']) && $cx['flags']['blitz'] && empty($v))) {
             $cx['scopes'][] = $in;
             $ret = $cb($cx, $v);
             array_pop($cx['scopes']);
             return $ret;
         }
 
-        if ($v === true) {
+        if ((!isset ($cx['flags']['blitz']) || !$cx['flags']['blitz']) && $v === true) {
             return $cb($cx, $in);
         }
 
-        if (!is_null($v) && ($v !== false)) {
+        if ((!isset ($cx['flags']['blitz']) || !$cx['flags']['blitz']) && !is_null($v) && ($v !== false)) {
             return $cb($cx, $v);
         }
+        /* BLITZ COMPATIBILITY */
 
         if ($else !== null) {
             $cx['scopes'][] = $in;
